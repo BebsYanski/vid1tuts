@@ -6,9 +6,13 @@ app = FastAPI()
 
 
 @app.get("/")
-def index():
+def index(limit: int = 10, published: bool = True, sort: str | None = None):
     """Entry route fetches all blogs"""
-    return {"data": "blog list"}
+
+    if not published:
+        return {"data": f"Returning all blogs with limit {limit}"}
+
+    return {"data": f"Returning published blogs and limiting to {limit}"}
 
 
 # Should always be above the dynamic route of the same kind.
