@@ -8,11 +8,15 @@ app = FastAPI()
 @app.get("/")
 def index():
     """Entry route fetches all blogs"""
-
     return {"data": "blog list"}
 
-@app.get("blog")
-def func():
+
+@app.get("/blog/unpublished")  # Should always be above the dynamic route of same kind.
+def unpublished():
+    """Fetch all unpublished blogs"""
+
+    return {"data": "Unpublished blog list"}
+
 
 @app.get("/blog/{blog_id}")
 def show(blog_id: int):
