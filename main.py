@@ -11,7 +11,8 @@ def index():
     return {"data": "blog list"}
 
 
-@app.get("/blog/unpublished")  # Should always be above the dynamic route of same kind.
+# Should always be above the dynamic route of the same kind.
+@app.get("/blog/unpublished")
 def unpublished():
     """Fetch all unpublished blogs"""
 
