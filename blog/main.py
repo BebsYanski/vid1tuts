@@ -87,3 +87,16 @@ def fetch_blog(blog_id: int, session: SessionDep):
     if blog is None:
         raise HTTPException(status_code=404, detail="Blog not found")
     return blog
+
+
+# Code above omitted 👆
+
+
+@app.delete("/blog/{blog_id}")
+def delete_blog(blog_id: int, session: SessionDep):
+    blog = session.get(Blog, blog_id)
+    if not blog:
+        raise HTTPException(status_code=404, detail="Blog not found")
+    session.delete(blog)
+    session.commit()
+    return {"ok": True}
