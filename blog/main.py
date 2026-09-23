@@ -8,6 +8,7 @@ from sqlmodel import SQLModel, Session
 
 from blog.schemas import Blog, BlogCreate, BlogPublic
 from blog.database import engine
+from blog.helpers import create_and_refresh
 
 
 def create_db_and_tables() -> None:
@@ -41,8 +42,7 @@ app = FastAPI(lifespan=lifespan)
 )
 def create_blog(data: BlogCreate, session: SessionDep) -> Blog:
     """Blog creation function"""
-    blog = Blog.model_validate(data)
-    session.add(blog)
-    session.commit()
-    session.refresh(blog)
-    return blog
+    blog = Blog.model_validate(
+        data
+    )  # model_validate is used to validate the data and create a Blog instance
+    return create_and_refresh(session, blog)

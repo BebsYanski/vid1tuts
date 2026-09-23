@@ -27,6 +27,7 @@ class BlogBase(SQLModel):
 class Blog(BlogBase, table=True):
     """Blog model for database table."""
 
+    __tablename__ = "blogs"
     id: int | None = Field(default=None, primary_key=True)
 
 
