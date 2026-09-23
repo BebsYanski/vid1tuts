@@ -89,7 +89,7 @@ def fetch_blog(blog_id: int, session: SessionDep):
     return blog
 
 
-# Code above omitted 👆
+# Deleting a blog
 
 
 @app.delete("/blog/{blog_id}")
@@ -102,6 +102,7 @@ def delete_blog(blog_id: int, session: SessionDep):
     return {"ok": True}
 
 
+# Updating a blog
 @app.patch("/blog/{blog_id}", response_model=BlogPublic)
 def update_blog(blog_id: int, blog: BlogUpdate, session: SessionDep):
     blog_db = session.get(Blog, blog_id)
