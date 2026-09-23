@@ -3,8 +3,9 @@
 from contextlib import asynccontextmanager
 from typing import Annotated, Generator
 
-from fastapi import FastAPI, Depends, status
+from fastapi import FastAPI, Depends, status, HTTPException
 from sqlmodel import SQLModel, Session, select
+
 
 from blog.schemas import Blog, BlogCreate, BlogPublic
 from blog.database import engine
@@ -55,3 +56,34 @@ def fetch_blogs(session: SessionDep):
     stmt = select(Blog)
     blogs = session.exec(stmt).all()
     return blogs
+
+
+# from fastapi import Query
+# from sqlmodel import select
+
+
+# @app.get("/blog", response_model=list[BlogPublic])
+# def fetch_blogs(
+#     session: SessionDep,
+#     published: bool | None = None,
+#     offset: int = 0,
+#     limit: int = Query(default=20, le=100),
+# ):
+#     """List blog posts, newest first."""
+#     stmt = select(Blog)
+
+#     if published is not None:
+#         stmt = stmt.where(Blog.published == published)
+
+#     stmt = stmt.order_by(Blog.created_at.desc()).offset(offset).limit(limit)
+
+#     return session.exec(stmt).all()
+
+
+# Fetching a single blog
+@app.get("/blog/{blog_id}", response_model=BlogPublic)
+def fetch_blog(blog_id: int, session: SessionDep):
+    blog = session.get(Blog, blog_id)
+    if blog is None:
+        raise HTTPException(status_code=404, detail="Blog not found")
+    return blog
