@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from typing import Annotated, Generator
 
 from fastapi import FastAPI, Depends, status
-from sqlmodel import SQLModel, Session
+from sqlmodel import SQLModel, Session, select
 
 from blog.schemas import Blog, BlogCreate, BlogPublic
 from blog.database import engine
@@ -46,3 +46,12 @@ def create_blog(data: BlogCreate, session: SessionDep) -> Blog:
         data
     )  # model_validate is used to validate the data and create a Blog instance
     return create_and_refresh(session, blog)
+
+
+# Getting the blogs from the database
+@app.get("/blog", response_model=list[BlogPublic])
+def fetch_blogs(session: SessionDep):
+    """Fetch all blogs from the database."""
+    stmt = select(Blog)
+    blogs = session.exec(stmt).all()
+    return blogs
