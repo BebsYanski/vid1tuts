@@ -36,6 +36,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
+# Creating a blog
 @app.post(
     "/blog",
     response_model=BlogPublic,
@@ -90,8 +91,6 @@ def fetch_blog(blog_id: int, session: SessionDep):
 
 
 # Deleting a blog
-
-
 @app.delete("/blog/{blog_id}")
 def delete_blog(blog_id: int, session: SessionDep):
     blog = session.get(Blog, blog_id)
