@@ -18,6 +18,7 @@ def create_db_and_tables() -> None:
 
 
 def get_session() -> Generator[Session, None, None]:
+    """Yield a database session for dependency injection."""
     with Session(engine) as session:
         yield session
 
@@ -26,7 +27,8 @@ SessionDep = Annotated[Session, Depends(get_session)]
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
+    """Initialize the database when the application starts."""
     # Runs on startup
     create_db_and_tables()
     yield
@@ -44,6 +46,7 @@ app = FastAPI(lifespan=lifespan)
 )
 def create_blog(data: BlogCreate, session: SessionDep) -> Blog:
     """Blog creation function"""
+    # blog = Blog(**data.model_dump())
     blog = Blog.model_validate(
         data
     )  # model_validate is used to validate the data and create a Blog instance
@@ -84,6 +87,7 @@ def fetch_blogs(session: SessionDep):
 # Fetching a single blog
 @app.get("/blog/{blog_id}", response_model=BlogPublic)
 def fetch_blog(blog_id: int, session: SessionDep):
+    """Fetch a single blog post by ID."""
     blog = session.get(Blog, blog_id)
     if blog is None:
         raise HTTPException(status_code=404, detail="Blog not found")
@@ -93,6 +97,7 @@ def fetch_blog(blog_id: int, session: SessionDep):
 # Deleting a blog
 @app.delete("/blog/{blog_id}")
 def delete_blog(blog_id: int, session: SessionDep):
+    """Delete a blog post."""
     blog = session.get(Blog, blog_id)
     if not blog:
         raise HTTPException(status_code=404, detail="Blog not found")
@@ -104,6 +109,8 @@ def delete_blog(blog_id: int, session: SessionDep):
 # Updating a blog
 @app.patch("/blog/{blog_id}", response_model=BlogPublic)
 def update_blog(blog_id: int, blog: BlogUpdate, session: SessionDep):
+    """Update a blog post."""
+
     blog_db = session.get(Blog, blog_id)
     if not blog_db:
         raise HTTPException(status_code=404, detail="Blog not found")
