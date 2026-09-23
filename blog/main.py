@@ -7,7 +7,7 @@ from fastapi import FastAPI, Depends, status, HTTPException
 from sqlmodel import SQLModel, Session, select
 
 
-from blog.schemas import Blog, BlogCreate, BlogPublic
+from blog.schemas import Blog, BlogCreate, BlogPublic, BlogUpdate
 from blog.database import engine
 from blog.helpers import create_and_refresh
 
@@ -100,3 +100,16 @@ def delete_blog(blog_id: int, session: SessionDep):
     session.delete(blog)
     session.commit()
     return {"ok": True}
+
+
+@app.patch("/blog/{blog_id}", response_model=BlogPublic)
+def update_blog(blog_id: int, blog: BlogUpdate, session: SessionDep):
+    blog_db = session.get(Blog, blog_id)
+    if not blog_db:
+        raise HTTPException(status_code=404, detail="Blog not found")
+    blog_data = blog.model_dump(exclude_unset=True)
+    blog_db.sqlmodel_update(blog_data)
+    session.add(blog_db)
+    session.commit()
+    session.refresh(blog_db)
+    return blog_db
