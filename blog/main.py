@@ -3,7 +3,7 @@
 from contextlib import asynccontextmanager
 from typing import Annotated, Generator
 
-from fastapi import FastAPI, Depends, status, HTTPException
+from fastapi import FastAPI, Depends, status, HTTPException, Response
 from sqlmodel import SQLModel, Session, select
 
 
@@ -46,7 +46,7 @@ app = FastAPI(lifespan=lifespan)
 )
 def create_blog(data: BlogCreate, session: SessionDep) -> Blog:
     """Blog creation function"""
-    # blog = Blog(**data.model_dump())
+    # blog = Blog(**data.model_dump())  # ** is used to unpack the data
     blog = Blog.model_validate(
         data
     )  # model_validate is used to validate the data and create a Blog instance
@@ -85,22 +85,29 @@ def fetch_blogs(session: SessionDep):
 
 
 # Fetching a single blog
-@app.get("/blog/{blog_id}", response_model=BlogPublic)
-def fetch_blog(blog_id: int, session: SessionDep):
+@app.get("/blog/{blog_id}", response_model=BlogPublic, status_code=status.HTTP_200_OK)
+def fetch_blog(blog_id: int, session: SessionDep, response: Response):
     """Fetch a single blog post by ID."""
     blog = session.get(Blog, blog_id)
+    # response.status_code = status.HTTP_201_CREATED
     if blog is None:
-        raise HTTPException(status_code=404, detail="Blog not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Blog with id {blog_id} not found",
+        )
     return blog
 
 
 # Deleting a blog
-@app.delete("/blog/{blog_id}")
+@app.delete("/blog/{blog_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_blog(blog_id: int, session: SessionDep):
     """Delete a blog post."""
     blog = session.get(Blog, blog_id)
     if not blog:
-        raise HTTPException(status_code=404, detail="Blog not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Blog with id {blog_id} not found",
+        )
     session.delete(blog)
     session.commit()
     return {"ok": True}
@@ -113,9 +120,14 @@ def update_blog(blog_id: int, blog: BlogUpdate, session: SessionDep):
 
     blog_db = session.get(Blog, blog_id)
     if not blog_db:
-        raise HTTPException(status_code=404, detail="Blog not found")
-    blog_data = blog.model_dump(exclude_unset=True)
-    blog_db.sqlmodel_update(blog_data)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Blog with id {blog_id} not found",
+        )
+    blog_data = blog.model_dump(
+        exclude_unset=True
+    )  # Get the data from the request body and exclude unset fields
+    blog_db.sqlmodel_update(blog_data)  # Update the blog
     session.add(blog_db)
     session.commit()
     session.refresh(blog_db)
