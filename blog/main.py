@@ -7,7 +7,7 @@ from fastapi import FastAPI, Depends, status, HTTPException, Response
 from sqlmodel import SQLModel, Session, select
 
 
-from blog.schemas import Blog, BlogCreate, BlogPublic, BlogUpdate
+from blog.schemas import Blog, BlogCreate, BlogPublic, BlogUpdate, utc_now
 from blog.database import engine
 from blog.helpers import create_and_refresh
 
@@ -115,20 +115,27 @@ def delete_blog(blog_id: int, session: SessionDep):
 
 # Updating a blog
 @app.patch("/blog/{blog_id}", response_model=BlogPublic)
-def update_blog(blog_id: int, blog: BlogUpdate, session: SessionDep):
-    """Update a blog post."""
+def update_blog(
+    blog_id: int,
+    data: BlogUpdate,
+    session: SessionDep,
+) -> Blog:
+    """Partially update a blog post."""
 
-    blog_db = session.get(Blog, blog_id)
-    if not blog_db:
+    blog = session.get(Blog, blog_id)  # ← get the blog instance
+    if not blog:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Blog with id {blog_id} not found",
         )
-    blog_data = blog.model_dump(
+
+    update_data = data.model_dump(
         exclude_unset=True
-    )  # Get the data from the request body and exclude unset fields
-    blog_db.sqlmodel_update(blog_data)  # Update the blog
-    session.add(blog_db)
+    )  # ← exclude_unset is used to exclude None values
+    blog.sqlmodel_update(update_data)  # ← update the blog instance with the new data
+    blog.updated_at = utc_now()  # ← mark the update time
+
+    session.add(blog)
     session.commit()
-    session.refresh(blog_db)
-    return blog_db
+    session.refresh(blog)
+    return blog
